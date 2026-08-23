@@ -7,4 +7,4 @@ ALLOWED_ORIGIN = "https://recon.pages.dev"
 
 [[kv_namespaces]]
 binding = "GILDED_KV"
-id = "YOUR_KV_NAMESPACE_ID"
+id = "64e45acd88a44488aee5bf39ffcc2a6a"
