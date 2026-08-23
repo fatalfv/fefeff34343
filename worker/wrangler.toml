@@ -1,8 +1,10 @@
-name = "ogfn-donation-worker"
-
+name = "gilded-payment-api"
 main = "src/index.js"
-
-compatibility_date = "2026-08-23"
+compatibility_date = "2026-08-24"
 
 [vars]
 ALLOWED_ORIGIN = "https://recon.pages.dev"
+
+[[kv_namespaces]]
+binding = "GILDED_KV"
+id = "YOUR_KV_NAMESPACE_ID"
