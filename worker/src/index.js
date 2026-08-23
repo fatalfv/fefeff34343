@@ -1,28 +1,17 @@
 const PACKS = {
   "dev-locker": {
-    id: "dev-locker",
     name: "Dev Locker",
     price: 14.99,
   },
 
   "full-locker": {
-    id: "full-locker",
     name: "Full Locker",
     price: 10.99,
   },
 };
 
-const DISCOUNT_CODES = {
-  ADMIN123: {
-    percent: 100,
-    maxUses: 1,
-  },
-};
-
-
 export default {
   async fetch(request, env) {
-
     const origin = request.headers.get("Origin");
 
     if (request.method === "OPTIONS") {
@@ -35,409 +24,271 @@ export default {
     const url = new URL(request.url);
 
     try {
-
-      /*
-      ======================================================
-      HEALTH
-      ======================================================
-      */
-
-      if (
-        url.pathname === "/api/health" &&
-        request.method === "GET"
-      ) {
-
-        return json({
-          success: true,
-          service: "Gilded Payment API",
-          version: "2.0.0",
-        }, 200, env, origin);
-
-      }
-
-
-      /*
-      ======================================================
-      DISCOUNT VALIDATE
-      ======================================================
-      */
-
       if (
         url.pathname === "/api/discount/validate" &&
         request.method === "POST"
       ) {
-
-        return await validateDiscount(
-          request,
-          env,
-          origin
-        );
-
+        return await validateDiscount(request, env, origin);
       }
-
-
-      /*
-      ======================================================
-      CREATE ORDER
-      ======================================================
-      */
 
       if (
         url.pathname === "/api/order/create" &&
         request.method === "POST"
       ) {
-
-        return await createOrder(
-          request,
-          env,
-          origin
-        );
-
+        return await createOrder(request, env, origin);
       }
-
-
-      /*
-      ======================================================
-      START PAYMENT
-      ======================================================
-      */
 
       if (
         url.pathname === "/api/order/payment" &&
         request.method === "POST"
       ) {
+        return await createPayment(request, env, origin);
+      }
 
-        return await startPayment(
-          request,
+      if (
+        url.pathname === "/api/order/status" &&
+        request.method === "GET"
+      ) {
+        return await orderStatus(request, env, origin);
+      }
+
+      if (url.pathname === "/api/health") {
+        return json(
+          {
+            success: true,
+            service: "Gilded Payment API",
+            status: "online",
+          },
+          200,
           env,
           origin
         );
-
       }
 
-
-      /*
-      ======================================================
-      PAYMENT RETURN
-      ======================================================
-      */
-
-      if (
-        url.pathname === "/payment/success" &&
-        request.method === "GET"
-      ) {
-
-        return await paymentSuccess(
-          request,
-          env
-        );
-
-      }
-
-
-      /*
-      ======================================================
-      PAYMENT CANCEL
-      ======================================================
-      */
-
-      if (
-        url.pathname === "/payment/cancel" &&
-        request.method === "GET"
-      ) {
-
-        return Response.redirect(
-          `${env.ALLOWED_ORIGIN}?payment=cancelled`,
-          302
-        );
-
-      }
-
-
-      /*
-      ======================================================
-      404
-      ======================================================
-      */
-
-      return json({
-        success: false,
-        error: "Not found",
-      }, 404, env, origin);
-
+      return json(
+        {
+          success: false,
+          error: "Not found",
+        },
+        404,
+        env,
+        origin
+      );
     } catch (error) {
+      console.error("Worker error:", error);
 
-      console.error("WORKER ERROR:", error);
-
-      return json({
-        success: false,
-        error: "Internal server error.",
-      }, 500, env, origin);
-
+      return json(
+        {
+          success: false,
+          error: "Internal server error.",
+        },
+        500,
+        env,
+        origin
+      );
     }
-
   },
 };
 
 
-/*
-============================================================
-DISCOUNT VALIDATION
-============================================================
-*/
+/* ============================================================
+   DISCOUNT VALIDATION
+============================================================ */
 
-async function validateDiscount(
-  request,
-  env,
-  origin
-) {
-
+async function validateDiscount(request, env, origin) {
   let body;
 
   try {
     body = await request.json();
   } catch {
-    return json({
-      success: false,
-      error: "Invalid JSON.",
-    }, 400, env, origin);
+    return json(
+      {
+        success: false,
+        valid: false,
+        error: "Invalid request.",
+      },
+      400,
+      env,
+      origin
+    );
   }
 
-  const code =
-    String(body.code || "")
-      .trim()
-      .toUpperCase();
+  const code = String(body.code || "")
+    .trim()
+    .toLowerCase();
 
-  const packId =
-    String(body.packId || "")
-      .trim();
-
-  if (!code) {
-
-    return json({
-      valid: false,
-      error: "Please enter a discount code.",
-    }, 400, env, origin);
-
-  }
+  const packId = String(body.packId || "");
 
   const pack = PACKS[packId];
 
   if (!pack) {
-
-    return json({
-      valid: false,
-      error: "Invalid package.",
-    }, 400, env, origin);
-
-  }
-
-  const discount =
-    DISCOUNT_CODES[code];
-
-  if (!discount) {
-
-    return json({
-      valid: false,
-      error: "Invalid discount code.",
-    }, 400, env, origin);
-
-  }
-
-
-  /*
-  Check whether ADMIN123 has already been
-  successfully redeemed.
-  */
-
-  const redemption =
-    await env.GILDED_KV.get(
-      `discount:${code}`
+    return json(
+      {
+        success: false,
+        valid: false,
+        error: "Invalid pack.",
+      },
+      400,
+      env,
+      origin
     );
+  }
 
-  if (redemption) {
+  if (!code) {
+    return json(
+      {
+        success: false,
+        valid: false,
+        error: "Please enter a discount code.",
+      },
+      400,
+      env,
+      origin
+    );
+  }
 
+  if (code !== "admin123") {
+    return json(
+      {
+        success: false,
+        valid: false,
+        error: "Invalid discount code.",
+      },
+      400,
+      env,
+      origin
+    );
+  }
+
+  const key = "discount:admin123";
+
+  const existing = await env.GILDED_KV.get(key);
+
+  if (existing) {
     let data;
 
     try {
-      data = JSON.parse(redemption);
+      data = JSON.parse(existing);
     } catch {
       data = {
-        used: redemption === "used",
+        used: existing === "used",
       };
     }
 
     if (data.used === true) {
-
-      return json({
-        valid: false,
-        error: "This discount code has already been used.",
-      }, 400, env, origin);
-
+      return json(
+        {
+          success: false,
+          valid: false,
+          error: "This discount code has already been used.",
+        },
+        400,
+        env,
+        origin
+      );
     }
-
   }
 
-
-  const discountAmount =
-    Number(
-      (
-        pack.price *
-        discount.percent /
-        100
-      ).toFixed(2)
-    );
-
-
-  const finalPrice =
-    Number(
-      Math.max(
-        0,
-        pack.price - discountAmount
-      ).toFixed(2)
-    );
-
-
-  return json({
-    valid: true,
-    code,
-    percent: discount.percent,
-    discountAmount,
-    finalPrice,
-  }, 200, env, origin);
-
+  return json(
+    {
+      success: true,
+      valid: true,
+      code: "ADMIN123",
+      percent: 100,
+      discountAmount: Number(pack.price.toFixed(2)),
+      finalPrice: 0,
+      message: "100% discount applied.",
+    },
+    200,
+    env,
+    origin
+  );
 }
 
 
-/*
-============================================================
-CREATE ORDER
-============================================================
-*/
+/* ============================================================
+   CREATE ORDER
+============================================================ */
 
-async function createOrder(
-  request,
-  env,
-  origin
-) {
-
+async function createOrder(request, env, origin) {
   let body;
 
   try {
     body = await request.json();
   } catch {
-    return json({
-      success: false,
-      error: "Invalid JSON.",
-    }, 400, env, origin);
+    return json(
+      {
+        success: false,
+        error: "Invalid request.",
+      },
+      400,
+      env,
+      origin
+    );
   }
 
+  const packId = String(body.packId || "");
+  const discordUsername = String(body.discordUsername || "").trim();
+  const discordId = String(body.discordId || "").trim();
+  const discountCode = String(body.discountCode || "")
+    .trim()
+    .toLowerCase();
 
-  const packId =
-    String(body.packId || "").trim();
-
-  const discordUsername =
-    String(body.discordUsername || "").trim();
-
-  const discordId =
-    String(body.discordId || "").trim();
-
-  const discountCode =
-    String(body.discountCode || "")
-      .trim()
-      .toUpperCase();
-
-
-  /*
-  Validate Discord username
-  */
-
-  if (!discordUsername) {
-
-    return json({
-      success: false,
-      error: "Discord username is required.",
-    }, 400, env, origin);
-
-  }
-
-
-  /*
-  Validate Discord ID
-  */
-
-  if (!/^[0-9]{17,20}$/.test(discordId)) {
-
-    return json({
-      success: false,
-      error: "Invalid Discord ID.",
-    }, 400, env, origin);
-
-  }
-
-
-  /*
-  Validate package
-  */
-
-  const pack =
-    PACKS[packId];
+  const pack = PACKS[packId];
 
   if (!pack) {
-
-    return json({
-      success: false,
-      error: "Invalid package.",
-    }, 400, env, origin);
-
+    return json(
+      {
+        success: false,
+        error: "Invalid donation pack.",
+      },
+      400,
+      env,
+      origin
+    );
   }
 
-
-  /*
-  Calculate server-side price.
-  Never trust the price sent by the browser.
-  */
-
-  let finalPrice =
-    pack.price;
-
-  let discountAmount =
-    0;
-
-  let discountPercent =
-    0;
-
-
-  /*
-  Discount
-  */
-
-  if (discountCode) {
-
-    const discount =
-      DISCOUNT_CODES[discountCode];
-
-    if (!discount) {
-
-      return json({
+  if (!discordUsername) {
+    return json(
+      {
         success: false,
-        error: "Invalid discount code.",
-      }, 400, env, origin);
+        error: "Discord username is required.",
+      },
+      400,
+      env,
+      origin
+    );
+  }
 
-    }
+  if (!/^[0-9]{17,20}$/.test(discordId)) {
+    return json(
+      {
+        success: false,
+        error: "Invalid Discord ID.",
+      },
+      400,
+      env,
+      origin
+    );
+  }
 
+  let finalPrice = pack.price;
+  let discountAmount = 0;
+  let discountPercent = 0;
+  let usedDiscount = false;
 
-    /*
-    Check redemption
-    */
+  /*
+   * Validate ADMIN123 AGAIN on the server.
+   *
+   * Never trust the price calculated by the frontend.
+   */
 
-    const existing =
-      await env.GILDED_KV.get(
-        `discount:${discountCode}`
-      );
+  if (discountCode === "admin123") {
+    const discountKey = "discount:admin123";
+
+    const existing = await env.GILDED_KV.get(discountKey);
 
     if (existing) {
-
       let data;
 
       try {
@@ -449,958 +300,448 @@ async function createOrder(
       }
 
       if (data.used === true) {
-
-        return json({
-          success: false,
-          error:
-            "This discount code has already been used.",
-        }, 400, env, origin);
-
+        return json(
+          {
+            success: false,
+            error: "This discount code has already been used.",
+          },
+          400,
+          env,
+          origin
+        );
       }
-
     }
 
-
-    discountPercent =
-      discount.percent;
-
-    discountAmount =
-      Number(
-        (
-          pack.price *
-          discount.percent /
-          100
-        ).toFixed(2)
-      );
-
-    finalPrice =
-      Number(
-        Math.max(
-          0,
-          pack.price - discountAmount
-        ).toFixed(2)
-      );
-
+    discountPercent = 100;
+    discountAmount = pack.price;
+    finalPrice = 0;
+    usedDiscount = true;
+  } else if (discountCode) {
+    return json(
+      {
+        success: false,
+        error: "Invalid discount code.",
+      },
+      400,
+      env,
+      origin
+    );
   }
 
-
-  /*
-  Generate order ID
-  */
-
-  const orderId =
-    `GILDED-${Date.now()}-${randomString(6)}`;
-
-
-  /*
-  Create order
-  */
+  const orderId = generateOrderId();
 
   const order = {
-
     orderId,
-
-    packId: pack.id,
-
+    packId,
     packName: pack.name,
 
-    originalPrice: pack.price,
-
-    finalPrice,
-
-    discountCode:
-      discountCode || null,
-
+    originalPrice: Number(pack.price.toFixed(2)),
+    discountAmount: Number(discountAmount.toFixed(2)),
     discountPercent,
 
-    discountAmount,
+    finalPrice: Number(finalPrice.toFixed(2)),
 
     discordUsername,
-
     discordId,
 
-    status:
-      finalPrice === 0
-        ? "completed"
-        : "pending_payment",
+    discountCode: usedDiscount ? "ADMIN123" : "",
 
-    paymentMethod: null,
+    status: finalPrice === 0
+      ? "pending_verification"
+      : "awaiting_payment",
 
-    createdAt:
-      new Date().toISOString(),
-
+    createdAt: new Date().toISOString(),
   };
 
-
   /*
-  ========================================================
-  IMPORTANT
-  ========================================================
-
-  For a FREE 100% order, mark the code used here.
-
-  KV is used to remember the redemption.
-  */
-
-  if (
-    finalPrice === 0 &&
-    discountCode
-  ) {
-
-    await env.GILDED_KV.put(
-      `discount:${discountCode}`,
-      JSON.stringify({
-        used: true,
-        orderId,
-        discordUsername,
-        discordId,
-        usedAt:
-          new Date().toISOString(),
-      })
-    );
-
-  }
-
-
-  /*
-  Save order
-  */
+   * Store order.
+   */
 
   await env.GILDED_KV.put(
     `order:${orderId}`,
     JSON.stringify(order)
   );
 
-
   /*
-  Send order to Discord webhook if configured.
-  */
+   * If this is a free order, consume ADMIN123.
+   */
 
-  if (env.DISCORD_WEBHOOK_URL) {
-
-    await sendDiscordWebhook(
-      env.DISCORD_WEBHOOK_URL,
-      order
+  if (usedDiscount) {
+    await env.GILDED_KV.put(
+      "discount:admin123",
+      JSON.stringify({
+        used: true,
+        orderId,
+        usedAt: new Date().toISOString(),
+      })
     );
-
   }
 
+  /*
+   * Discord logging.
+   */
+
+  await sendDiscordLog(env, order);
 
   /*
-  FREE ORDER
-  */
+   * Free order.
+   */
 
   if (finalPrice === 0) {
-
-    return json({
-
-      success: true,
-
-      orderId,
-
-      finalPrice: 0,
-
-      free: true,
-
-      status: "completed",
-
-    }, 200, env, origin);
-
+    return json(
+      {
+        success: true,
+        orderId,
+        finalPrice: 0,
+        free: true,
+        status: "pending_verification",
+      },
+      200,
+      env,
+      origin
+    );
   }
 
-
   /*
-  Paid order
-  */
+   * Paid order.
+   *
+   * The frontend will now ask the Worker for
+   * the configured payment URL.
+   */
 
-  return json({
-
-    success: true,
-
-    orderId,
-
-    finalPrice,
-
-    free: false,
-
-    status: "pending_payment",
-
-  }, 200, env, origin);
-
+  return json(
+    {
+      success: true,
+      orderId,
+      finalPrice: Number(finalPrice.toFixed(2)),
+      free: false,
+      status: "awaiting_payment",
+    },
+    200,
+    env,
+    origin
+  );
 }
 
 
-/*
-============================================================
-START PAYMENT
-============================================================
-*/
+/* ============================================================
+   PAYMENT
+============================================================ */
 
-async function startPayment(
-  request,
-  env,
-  origin
-) {
-
+async function createPayment(request, env, origin) {
   let body;
 
   try {
     body = await request.json();
   } catch {
-    return json({
-      success: false,
-      error: "Invalid JSON.",
-    }, 400, env, origin);
+    return json(
+      {
+        success: false,
+        error: "Invalid request.",
+      },
+      400,
+      env,
+      origin
+    );
   }
 
-
-  const orderId =
-    String(body.orderId || "").trim();
-
-  const method =
-    String(body.method || "")
-      .trim()
-      .toLowerCase();
-
+  const orderId = String(body.orderId || "");
+  const method = String(body.method || "").toLowerCase();
 
   if (!orderId) {
-
-    return json({
-      success: false,
-      error: "Order ID is required.",
-    }, 400, env, origin);
-
-  }
-
-
-  if (
-    method !== "paypal" &&
-    method !== "card"
-  ) {
-
-    return json({
-      success: false,
-      error: "Invalid payment method.",
-    }, 400, env, origin);
-
-  }
-
-
-  const rawOrder =
-    await env.GILDED_KV.get(
-      `order:${orderId}`
+    return json(
+      {
+        success: false,
+        error: "Order ID is required.",
+      },
+      400,
+      env,
+      origin
     );
-
-
-  if (!rawOrder) {
-
-    return json({
-      success: false,
-      error: "Order not found.",
-    }, 404, env, origin);
-
   }
 
+  const stored = await env.GILDED_KV.get(
+    `order:${orderId}`
+  );
 
-  const order =
-    JSON.parse(rawOrder);
+  if (!stored) {
+    return json(
+      {
+        success: false,
+        error: "Order not found.",
+      },
+      404,
+      env,
+      origin
+    );
+  }
 
+  const order = JSON.parse(stored);
 
   if (order.finalPrice <= 0) {
-
-    return json({
-      success: false,
-      error: "This order does not require payment.",
-    }, 400, env, origin);
-
-  }
-
-
-  /*
-  ========================================================
-  PAYPAL
-  ========================================================
-  */
-
-  if (method === "paypal") {
-
-    if (
-      !env.PAYPAL_CLIENT_ID ||
-      !env.PAYPAL_CLIENT_SECRET
-    ) {
-
-      return json({
-        success: false,
-        error:
-          "PayPal has not been configured on the Worker yet.",
-      }, 503, env, origin);
-
-    }
-
-
-    try {
-
-      const url =
-        await createPayPalOrder(
-          order,
-          env
-        );
-
-
-      order.paymentMethod =
-        "paypal";
-
-      order.paymentStartedAt =
-        new Date().toISOString();
-
-
-      await env.GILDED_KV.put(
-        `order:${orderId}`,
-        JSON.stringify(order)
-      );
-
-
-      return json({
-        success: true,
-        url,
-      }, 200, env, origin);
-
-    } catch (error) {
-
-      console.error(
-        "PAYPAL ERROR:",
-        error
-      );
-
-      return json({
-        success: false,
-        error:
-          "Unable to create PayPal checkout.",
-      }, 500, env, origin);
-
-    }
-
-  }
-
-
-  /*
-  ========================================================
-  CARD / STRIPE
-  ========================================================
-  */
-
-  if (method === "card") {
-
-    if (!env.STRIPE_SECRET_KEY) {
-
-      return json({
-        success: false,
-        error:
-          "Card payments have not been configured on the Worker yet.",
-      }, 503, env, origin);
-
-    }
-
-
-    try {
-
-      const url =
-        await createStripeCheckout(
-          order,
-          env
-        );
-
-
-      order.paymentMethod =
-        "card";
-
-      order.paymentStartedAt =
-        new Date().toISOString();
-
-
-      await env.GILDED_KV.put(
-        `order:${orderId}`,
-        JSON.stringify(order)
-      );
-
-
-      return json({
-        success: true,
-        url,
-      }, 200, env, origin);
-
-    } catch (error) {
-
-      console.error(
-        "STRIPE ERROR:",
-        error
-      );
-
-      return json({
-        success: false,
-        error:
-          "Unable to create card checkout.",
-      }, 500, env, origin);
-
-    }
-
-  }
-
-}
-
-
-/*
-============================================================
-PAYPAL CREATE ORDER
-============================================================
-*/
-
-async function createPayPalOrder(
-  order,
-  env
-) {
-
-  const base =
-    env.PAYPAL_ENV === "production"
-      ? "https://api-m.paypal.com"
-      : "https://api-m.sandbox.paypal.com";
-
-
-  /*
-  Get access token
-  */
-
-  const auth =
-    btoa(
-      `${env.PAYPAL_CLIENT_ID}:${env.PAYPAL_CLIENT_SECRET}`
-    );
-
-
-  const tokenResponse =
-    await fetch(
-      `${base}/v1/oauth2/token`,
+    return json(
       {
-        method: "POST",
-
-        headers: {
-          "Authorization":
-            `Basic ${auth}`,
-
-          "Content-Type":
-            "application/x-www-form-urlencoded",
-        },
-
-        body:
-          "grant_type=client_credentials",
-      }
+        success: false,
+        error: "This order does not require payment.",
+      },
+      400,
+      env,
+      origin
     );
-
-
-  if (!tokenResponse.ok) {
-
-    throw new Error(
-      "PayPal authentication failed."
-    );
-
   }
 
-
-  const tokenData =
-    await tokenResponse.json();
-
+  if (method !== "paypal" && method !== "card") {
+    return json(
+      {
+        success: false,
+        error: "Invalid payment method.",
+      },
+      400,
+      env,
+      origin
+    );
+  }
 
   /*
-  Create PayPal order
-  */
+   * Set these in Cloudflare Worker environment variables:
+   *
+   * PAYPAL_PAYMENT_URL
+   * CARD_PAYMENT_URL
+   *
+   * You can use your actual PayPal checkout/payment URL
+   * and card provider checkout URL here.
+   */
 
-  const response =
-    await fetch(
-      `${base}/v2/checkout/orders`,
+  const paymentUrl =
+    method === "paypal"
+      ? env.PAYPAL_PAYMENT_URL
+      : env.CARD_PAYMENT_URL;
+
+  if (!paymentUrl) {
+    return json(
       {
-        method: "POST",
-
-        headers: {
-
-          "Authorization":
-            `Bearer ${tokenData.access_token}`,
-
-          "Content-Type":
-            "application/json",
-
-        },
-
-        body: JSON.stringify({
-
-          intent: "CAPTURE",
-
-          purchase_units: [
-
-            {
-
-              reference_id:
-                order.orderId,
-
-              description:
-                order.packName,
-
-              amount: {
-
-                currency_code: "USD",
-
-                value:
-                  order.finalPrice.toFixed(2),
-
-              },
-
-            },
-
-          ],
-
-          application_context: {
-
-            brand_name:
-              "Gilded",
-
-            user_action:
-              "PAY_NOW",
-
-            return_url:
-              `${env.WORKER_URL}/payment/success?method=paypal&orderId=${encodeURIComponent(order.orderId)}`,
-
-            cancel_url:
-              `${env.WORKER_URL}/payment/cancel?orderId=${encodeURIComponent(order.orderId)}`,
-
-          },
-
-        }),
-
-      }
+        success: false,
+        error:
+          `${method === "paypal" ? "PayPal" : "Card"} payment is not configured yet.`,
+      },
+      503,
+      env,
+      origin
     );
-
-
-  const data =
-    await response.json();
-
-
-  if (!response.ok) {
-
-    console.error(
-      "PAYPAL CREATE:",
-      data
-    );
-
-    throw new Error(
-      "PayPal order creation failed."
-    );
-
   }
-
-
-  const approve =
-    data.links?.find(
-      link =>
-        link.rel === "approve"
-    );
-
-
-  if (!approve?.href) {
-
-    throw new Error(
-      "PayPal approval URL missing."
-    );
-
-  }
-
-
-  return approve.href;
-
-}
-
-
-/*
-============================================================
-STRIPE CHECKOUT
-============================================================
-*/
-
-async function createStripeCheckout(
-  order,
-  env
-) {
-
-  const params =
-    new URLSearchParams();
-
-
-  params.append(
-    "mode",
-    "payment"
-  );
-
-
-  params.append(
-    "success_url",
-    `${env.WORKER_URL}/payment/success?method=card&orderId=${encodeURIComponent(order.orderId)}&session_id={CHECKOUT_SESSION_ID}`
-  );
-
-
-  params.append(
-    "cancel_url",
-    `${env.WORKER_URL}/payment/cancel?orderId=${encodeURIComponent(order.orderId)}`
-  );
-
-
-  params.append(
-    "line_items[0][price_data][currency]",
-    "usd"
-  );
-
-
-  params.append(
-    "line_items[0][price_data][product_data][name]",
-    order.packName
-  );
-
-
-  params.append(
-    "line_items[0][price_data][product_data][description]",
-    `Gilded Order ${order.orderId}`
-  );
-
-
-  params.append(
-    "line_items[0][price_data][unit_amount]",
-    String(
-      Math.round(
-        order.finalPrice * 100
-      )
-    )
-  );
-
-
-  params.append(
-    "line_items[0][quantity]",
-    "1"
-  );
-
-
-  params.append(
-    "metadata[orderId]",
-    order.orderId
-  );
-
-
-  const response =
-    await fetch(
-      "https://api.stripe.com/v1/checkout/sessions",
-      {
-
-        method: "POST",
-
-        headers: {
-
-          "Authorization":
-            `Bearer ${env.STRIPE_SECRET_KEY}`,
-
-          "Content-Type":
-            "application/x-www-form-urlencoded",
-
-        },
-
-        body: params,
-
-      }
-    );
-
-
-  const data =
-    await response.json();
-
-
-  if (!response.ok) {
-
-    console.error(
-      "STRIPE CREATE:",
-      data
-    );
-
-    throw new Error(
-      "Stripe checkout creation failed."
-    );
-
-  }
-
-
-  return data.url;
-
-}
-
-
-/*
-============================================================
-PAYMENT SUCCESS
-============================================================
-*/
-
-async function paymentSuccess(
-  request,
-  env
-) {
-
-  const url =
-    new URL(request.url);
-
-  const orderId =
-    url.searchParams.get(
-      "orderId"
-    );
-
-  const method =
-    url.searchParams.get(
-      "method"
-    );
-
-
-  if (!orderId) {
-
-    return Response.redirect(
-      `${env.ALLOWED_ORIGIN}?payment=error`,
-      302
-    );
-
-  }
-
-
-  const rawOrder =
-    await env.GILDED_KV.get(
-      `order:${orderId}`
-    );
-
-
-  if (!rawOrder) {
-
-    return Response.redirect(
-      `${env.ALLOWED_ORIGIN}?payment=error`,
-      302
-    );
-
-  }
-
-
-  const order =
-    JSON.parse(rawOrder);
-
 
   /*
-  IMPORTANT:
+   * Update order status.
+   */
 
-  The return URL itself should not be treated as
-  proof of payment.
-
-  For production, configure Stripe webhooks and
-  PayPal capture/webhooks to mark the order paid.
-  */
-
-  order.paymentReturnAt =
-    new Date().toISOString();
-
-  order.returnMethod =
-    method;
-
+  order.paymentMethod = method;
+  order.status = "payment_started";
+  order.paymentStartedAt = new Date().toISOString();
 
   await env.GILDED_KV.put(
     `order:${orderId}`,
     JSON.stringify(order)
   );
 
-
-  return Response.redirect(
-    `${env.ALLOWED_ORIGIN}?payment=pending&orderId=${encodeURIComponent(orderId)}`,
-    302
+  return json(
+    {
+      success: true,
+      orderId,
+      method,
+      url: paymentUrl,
+    },
+    200,
+    env,
+    origin
   );
-
 }
 
 
-/*
-============================================================
-DISCORD WEBHOOK
-============================================================
-*/
+/* ============================================================
+   ORDER STATUS
+============================================================ */
 
-async function sendDiscordWebhook(
-  webhook,
-  order
-) {
+async function orderStatus(request, env, origin) {
+  const url = new URL(request.url);
+
+  const orderId = url.searchParams.get("orderId");
+
+  if (!orderId) {
+    return json(
+      {
+        success: false,
+        error: "Order ID is required.",
+      },
+      400,
+      env,
+      origin
+    );
+  }
+
+  const stored = await env.GILDED_KV.get(
+    `order:${orderId}`
+  );
+
+  if (!stored) {
+    return json(
+      {
+        success: false,
+        error: "Order not found.",
+      },
+      404,
+      env,
+      origin
+    );
+  }
+
+  const order = JSON.parse(stored);
+
+  return json(
+    {
+      success: true,
+      order,
+    },
+    200,
+    env,
+    origin
+  );
+}
+
+
+/* ============================================================
+   DISCORD WEBHOOK
+============================================================ */
+
+async function sendDiscordLog(env, order) {
+  if (!env.DISCORD_WEBHOOK_URL) {
+    console.warn(
+      "DISCORD_WEBHOOK_URL is not configured."
+    );
+
+    return;
+  }
+
+  const color =
+    order.finalPrice === 0
+      ? 0x63d49b
+      : 0xe3b82f;
+
+  const embed = {
+    title: "◆ New Gilded Donation Order",
+    color,
+
+    fields: [
+      {
+        name: "Order ID",
+        value: order.orderId,
+        inline: true,
+      },
+
+      {
+        name: "Package",
+        value: order.packName,
+        inline: true,
+      },
+
+      {
+        name: "Price",
+        value:
+          `$${order.finalPrice.toFixed(2)} USD`,
+        inline: true,
+      },
+
+      {
+        name: "Discord Username",
+        value: order.discordUsername,
+        inline: true,
+      },
+
+      {
+        name: "Discord ID",
+        value: order.discordId,
+        inline: true,
+      },
+
+      {
+        name: "Discount",
+        value:
+          order.discountPercent > 0
+            ? `${order.discountPercent}%`
+            : "None",
+        inline: true,
+      },
+
+      {
+        name: "Status",
+        value: order.status,
+        inline: false,
+      },
+    ],
+
+    footer: {
+      text: "Gilded Donation System",
+    },
+
+    timestamp: order.createdAt,
+  };
 
   try {
-
-    await fetch(
-      webhook,
+    const response = await fetch(
+      env.DISCORD_WEBHOOK_URL,
       {
-
         method: "POST",
 
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
         },
 
         body: JSON.stringify({
-
-          username: "Gilded Orders",
-
-          embeds: [
-
-            {
-
-              title:
-                "New Gilded Order",
-
-              color:
-                0xE3B82F,
-
-              fields: [
-
-                {
-                  name: "Order",
-                  value:
-                    order.orderId,
-                  inline: true,
-                },
-
-                {
-                  name: "Package",
-                  value:
-                    order.packName,
-                  inline: true,
-                },
-
-                {
-                  name: "Discord",
-                  value:
-                    order.discordUsername,
-                  inline: true,
-                },
-
-                {
-                  name: "Discord ID",
-                  value:
-                    order.discordId,
-                  inline: true,
-                },
-
-                {
-                  name: "Original Price",
-                  value:
-                    `$${order.originalPrice.toFixed(2)}`,
-                  inline: true,
-                },
-
-                {
-                  name: "Final Price",
-                  value:
-                    `$${order.finalPrice.toFixed(2)}`,
-                  inline: true,
-                },
-
-                {
-                  name: "Discount",
-                  value:
-                    order.discountCode
-                      ? `${order.discountCode} (${order.discountPercent}%)`
-                      : "None",
-                  inline: false,
-                },
-
-                {
-                  name: "Status",
-                  value:
-                    order.status,
-                  inline: false,
-                },
-
-              ],
-
-              timestamp:
-                new Date().toISOString(),
-
-            },
-
-          ],
-
+          embeds: [embed],
         }),
-
       }
     );
 
+    if (!response.ok) {
+      console.error(
+        "Discord webhook failed:",
+        response.status,
+        await response.text()
+      );
+    }
   } catch (error) {
-
     console.error(
-      "DISCORD WEBHOOK ERROR:",
+      "Discord webhook error:",
       error
     );
-
   }
-
 }
 
 
-/*
-============================================================
-RANDOM ID
-============================================================
-*/
+/* ============================================================
+   HELPERS
+============================================================ */
 
-function randomString(length) {
+function generateOrderId() {
+  const timestamp =
+    Date.now().toString(36).toUpperCase();
 
-  const chars =
-    "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const random =
+    crypto.randomUUID()
+      .replaceAll("-", "")
+      .substring(0, 8)
+      .toUpperCase();
 
-  let output = "";
-
-  for (
-    let i = 0;
-    i < length;
-    i++
-  ) {
-
-    output +=
-      chars[
-        Math.floor(
-          Math.random() *
-          chars.length
-        )
-      ];
-
-  }
-
-  return output;
-
+  return `GIL-${timestamp}-${random}`;
 }
 
 
-/*
-============================================================
-JSON RESPONSE
-============================================================
-*/
-
-function json(
-  data,
-  status,
-  env,
-  origin
-) {
-
+function json(data, status, env, origin) {
   return new Response(
     JSON.stringify(data),
     {
-
       status,
 
       headers: {
-
         "Content-Type":
           "application/json",
 
@@ -1408,35 +749,28 @@ function json(
           env,
           origin
         ),
-
       },
-
     }
   );
-
 }
 
 
-/*
-============================================================
-CORS
-============================================================
-*/
-
-function corsHeaders(
-  env,
-  origin
-) {
-
+function corsHeaders(env, origin) {
   const allowed =
     env.ALLOWED_ORIGIN;
 
-  return {
+  /*
+   * Only allow your actual frontend.
+   */
 
+  const allowOrigin =
+    origin && allowed && origin === allowed
+      ? origin
+      : allowed || "null";
+
+  return {
     "Access-Control-Allow-Origin":
-      origin === allowed
-        ? origin
-        : allowed,
+      allowOrigin,
 
     "Access-Control-Allow-Methods":
       "GET, POST, OPTIONS",
@@ -1444,9 +778,10 @@ function corsHeaders(
     "Access-Control-Allow-Headers":
       "Content-Type",
 
+    "Access-Control-Max-Age":
+      "86400",
+
     "Vary":
       "Origin",
-
   };
-
 }
