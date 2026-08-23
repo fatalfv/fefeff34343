@@ -1,339 +1,1971 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="description"
-    content="Support the OGFN project with a secure donation."
-  >
+<title>Gilded — Donation Packs</title>
 
-  <title>OGFN • Support the Project</title>
+<style>
+:root {
+  --bg:#02050d;
+  --navy:#07112d;
+  --navy2:#0a1533;
+  --gold:#e3b82f;
+  --gold-light:#f7d75b;
+  --text:#f4f5fa;
+  --muted:#a9afc0;
+  --border:rgba(255,255,255,.12);
+  --success:#63d49b;
+  --danger:#ff5c5c;
+}
 
-  <link rel="stylesheet" href="styles.css">
+* {
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html {
+  scroll-behavior:smooth;
+}
+
+body {
+  min-height:100vh;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 50% -10%,rgba(227,184,47,.1),transparent 32%),
+    #02050d;
+}
+
+body.modal-open {
+  overflow:hidden;
+}
+
+button,
+input {
+  font:inherit;
+}
+
+button {
+  cursor:pointer;
+}
+
+a {
+  color:inherit;
+  text-decoration:none;
+}
+
+/* NAV */
+
+.navbar {
+  position:sticky;
+  top:0;
+  z-index:100;
+  height:64px;
+  border-bottom:1px solid rgba(227,184,47,.18);
+  background:rgba(7,17,45,.96);
+  backdrop-filter:blur(16px);
+}
+
+.nav-inner {
+  width:min(1240px,calc(100% - 40px));
+  height:100%;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.brand {
+  font-size:22px;
+  font-weight:800;
+  color:var(--gold-light);
+}
+
+.nav-links {
+  display:flex;
+  align-items:center;
+  gap:30px;
+}
+
+.nav-links a {
+  color:#e4e7ef;
+  font-size:14px;
+}
+
+.nav-links a:hover {
+  color:var(--gold-light);
+}
+
+.discord-button {
+  border:1px solid rgba(227,184,47,.7);
+  border-radius:9px;
+  padding:11px 22px;
+  background:linear-gradient(180deg,#edc63e,#d8aa24);
+  color:#070b15!important;
+  font-weight:800;
+}
+
+.mobile-menu {
+  display:none;
+  border:0;
+  background:none;
+  color:white;
+  font-size:25px;
+}
+
+/* HERO */
+
+.hero {
+  text-align:center;
+  padding:76px 20px 55px;
+}
+
+.hero h1 {
+  font-size:clamp(40px,5vw,58px);
+  color:var(--gold-light);
+  letter-spacing:-2px;
+}
+
+.hero p {
+  max-width:720px;
+  margin:22px auto 0;
+  color:#b8bdcb;
+  line-height:1.7;
+}
+
+/* PACKS */
+
+.packs {
+  width:min(1240px,calc(100% - 40px));
+  margin:auto;
+  padding-bottom:90px;
+}
+
+.pack-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:24px;
+}
+
+.pack-card {
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:15px;
+  background:#07112d;
+  transition:.25s;
+}
+
+.pack-card:hover {
+  transform:translateY(-5px);
+  border-color:rgba(227,184,47,.35);
+}
+
+.pack-image {
+  height:210px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(227,184,47,.24),transparent 35%),
+    linear-gradient(120deg,#020202,#080a0f);
+}
+
+.pack-icon {
+  font-size:80px;
+  filter:drop-shadow(0 0 20px rgba(227,184,47,.4));
+}
+
+.best-value {
+  position:absolute;
+  right:15px;
+  top:15px;
+  border-radius:999px;
+  padding:6px 13px;
+  background:var(--gold);
+  color:#090c13;
+  font-size:11px;
+  font-weight:900;
+}
+
+.pack-image {
+  position:relative;
+}
+
+.pack-content {
+  padding:27px 24px 25px;
+}
+
+.pack-name {
+  font-size:19px;
+  font-weight:800;
+}
+
+.price {
+  margin-top:5px;
+}
+
+.price strong {
+  font-size:29px;
+  color:var(--gold-light);
+}
+
+.price span {
+  color:#7e8598;
+  font-size:12px;
+}
+
+.description {
+  min-height:44px;
+  margin-top:15px;
+  color:#b4bac8;
+  font-size:13px;
+  line-height:1.6;
+}
+
+.features {
+  list-style:none;
+  margin-top:10px;
+  min-height:150px;
+}
+
+.features li {
+  padding:6px 0 6px 21px;
+  color:#d5d9e3;
+  font-size:13px;
+  position:relative;
+}
+
+.features li::before {
+  content:"✓";
+  position:absolute;
+  left:0;
+  color:var(--gold-light);
+  font-weight:900;
+}
+
+.buy-button {
+  width:100%;
+  margin-top:14px;
+  padding:14px;
+  border:0;
+  border-radius:11px;
+  background:linear-gradient(180deg,#e9bf36,#d7aa25);
+  color:#090c13;
+  font-weight:850;
+}
+
+/* INFO */
+
+.info-section {
+  width:min(1240px,calc(100% - 40px));
+  margin:0 auto 90px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+}
+
+.info-card {
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:25px;
+  background:rgba(7,17,45,.72);
+}
+
+.info-card h3 {
+  margin-bottom:8px;
+}
+
+.info-card p {
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.6;
+}
+
+/* FOOTER */
+
+footer {
+  border-top:1px solid rgba(255,255,255,.08);
+  background:#030712;
+  padding:35px 20px;
+}
+
+.footer-inner {
+  width:min(1240px,100%);
+  margin:auto;
+  display:flex;
+  justify-content:space-between;
+  color:#777f93;
+  font-size:13px;
+}
+
+/* MODAL */
+
+.modal-overlay {
+  position:fixed;
+  inset:0;
+  z-index:500;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(0,0,0,.76);
+  backdrop-filter:blur(9px);
+}
+
+.modal-overlay.active {
+  display:flex;
+}
+
+.modal {
+  width:min(520px,100%);
+  max-height:calc(100vh - 40px);
+  overflow-y:auto;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:16px;
+  background:#08122d;
+  padding:29px;
+}
+
+.close-modal {
+  position:absolute;
+  right:17px;
+  top:15px;
+  border:0;
+  background:none;
+  color:#aeb5c3;
+  font-size:28px;
+}
+
+.steps {
+  display:flex;
+  justify-content:center;
+  gap:7px;
+  margin-bottom:28px;
+}
+
+.step-dot {
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#4a556d;
+}
+
+.step-dot.active {
+  width:31px;
+  border-radius:999px;
+  background:var(--gold);
+}
+
+.modal h2 {
+  color:var(--gold-light);
+  font-size:22px;
+  margin-bottom:7px;
+}
+
+.modal-subtitle {
+  color:#aeb5c4;
+  font-size:13px;
+  line-height:1.5;
+  margin-bottom:25px;
+}
+
+.field {
+  margin-bottom:18px;
+}
+
+.field label {
+  display:block;
+  margin-bottom:8px;
+  font-size:13px;
+  font-weight:650;
+}
+
+.field input {
+  width:100%;
+  border:1px solid #273555;
+  border-radius:11px;
+  outline:none;
+  padding:14px;
+  background:#07112a;
+  color:white;
+}
+
+.field input:focus {
+  border-color:rgba(227,184,47,.7);
+}
+
+.helper {
+  margin-top:6px;
+  color:#788197;
+  font-size:11px;
+  line-height:1.45;
+}
+
+/* DISCOUNT */
+
+.discount-row {
+  display:flex;
+  gap:8px;
+}
+
+.discount-row input {
+  flex:1;
+}
+
+.discount-row button {
+  border:0;
+  border-radius:10px;
+  padding:0 18px;
+  background:#273655;
+  color:white;
+  font-weight:800;
+}
+
+.discount-status {
+  min-height:18px;
+  margin-top:7px;
+  font-size:12px;
+}
+
+.discount-status.success {
+  color:var(--success);
+}
+
+.discount-status.error {
+  color:var(--danger);
+}
+
+/* TERMS */
+
+.terms {
+  display:flex;
+  gap:11px;
+  align-items:flex-start;
+  margin:18px 0 24px;
+}
+
+.terms input {
+  width:15px;
+  height:15px;
+  accent-color:var(--gold);
+}
+
+.terms label {
+  color:#aeb4c2;
+  font-size:12px;
+  line-height:1.65;
+}
+
+.continue-button,
+.paypal-button {
+  width:100%;
+  border:0;
+  border-radius:11px;
+  padding:14px;
+  background:linear-gradient(180deg,#e8be35,#d5a923);
+  color:#090c13;
+  font-weight:900;
+}
+
+.back-button {
+  width:100%;
+  border:1px solid #293755;
+  border-radius:11px;
+  padding:13px;
+  margin-top:10px;
+  background:none;
+  color:#b9c0cf;
+  font-weight:700;
+}
+
+.error {
+  display:none;
+  margin-bottom:17px;
+  border:1px solid rgba(255,91,91,.25);
+  border-radius:9px;
+  padding:11px;
+  background:rgba(255,91,91,.08);
+  color:#ff8585;
+  font-size:12px;
+}
+
+.error.show {
+  display:block;
+}
+
+/* SUMMARY */
+
+.payment-summary {
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:12px;
+  padding:17px;
+  margin-bottom:18px;
+  background:rgba(2,5,13,.35);
+}
+
+.summary-row {
+  display:flex;
+  justify-content:space-between;
+  padding:7px 0;
+  font-size:13px;
+  gap:15px;
+}
+
+.summary-row span:first-child {
+  color:#858da0;
+}
+
+.summary-total {
+  border-top:1px solid rgba(255,255,255,.1);
+  margin-top:8px;
+  padding-top:14px;
+}
+
+.summary-total span:last-child {
+  color:var(--gold-light);
+  font-size:18px;
+  font-weight:900;
+}
+
+.discount-text {
+  color:var(--success)!important;
+}
+
+.payment-choice {
+  display:grid;
+  gap:10px;
+}
+
+.payment-choice button {
+  width:100%;
+  padding:15px;
+  border:0;
+  border-radius:11px;
+  font-weight:900;
+}
+
+.paypal {
+  background:#ffc439;
+  color:#101010;
+}
+
+.card {
+  background:#e8be35;
+  color:#090c13;
+}
+
+.success {
+  text-align:center;
+  padding:20px 5px;
+}
+
+.success-icon {
+  width:65px;
+  height:65px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0 auto 20px;
+  border-radius:50%;
+  background:rgba(99,212,155,.12);
+  border:1px solid rgba(99,212,155,.3);
+  color:var(--success);
+  font-size:30px;
+}
+
+.success p {
+  color:#9ea6b7;
+  line-height:1.65;
+  font-size:13px;
+  margin:10px 0 23px;
+}
+
+/* MOBILE */
+
+@media(max-width:800px) {
+
+  .nav-links {
+    position:absolute;
+    top:64px;
+    left:0;
+    right:0;
+    display:none;
+    flex-direction:column;
+    gap:15px;
+    padding:20px;
+    background:#07112d;
+  }
+
+  .nav-links.open {
+    display:flex;
+  }
+
+  .mobile-menu {
+    display:block;
+  }
+
+  .pack-grid,
+  .info-section {
+    grid-template-columns:1fr;
+  }
+
+  .footer-inner {
+    flex-direction:column;
+    gap:15px;
+  }
+}
+</style>
 </head>
 
 <body>
 
-  <div class="bg-grid"></div>
+<header class="navbar">
 
-  <!-- NAVIGATION -->
-  <header class="nav">
+  <div class="nav-inner">
 
-    <a class="brand" href="#">
-      <span class="brand-mark">O</span>
-
-      <span>
-        OGFN<span class="muted">.GG</span>
-      </span>
+    <a href="#" class="brand">
+      ◆ Gilded
     </a>
 
-    <a class="nav-link" href="#donate">
-      Donate
-    </a>
+    <button class="mobile-menu" id="mobileMenu">
+      ☰
+    </button>
 
-  </header>
+    <nav class="nav-links" id="navLinks">
 
+      <a href="#home">Home</a>
+      <a href="#packs">Packs</a>
+      <a href="#faq">FAQ</a>
 
-  <main>
-
-    <!-- HERO -->
-    <section class="hero">
-
-      <div class="badge">
-        <span>●</span>
-        PROJECT SUPPORT
-      </div>
-
-      <h1>
-        Help keep the
-        <br>
-        <span>project running.</span>
-      </h1>
-
-      <p class="hero-copy">
-        Your support helps cover hosting, development and
-        infrastructure. Every donation makes a difference.
-      </p>
-
-      <a class="primary-btn" href="#donate">
-        Support OGFN
-        <span>→</span>
+      <!-- CHANGE THIS -->
+      <a
+        class="discord-button"
+        href="https://discord.gg/YOURINVITE"
+        target="_blank"
+      >
+        Join Discord
       </a>
 
-    </section>
+    </nav>
+
+  </div>
+
+</header>
 
 
-    <!-- DONATION SECTION -->
-    <section id="donate" class="donation-section">
+<main>
 
-      <div class="section-heading">
+<section class="hero" id="home">
 
-        <div>
-          <p class="eyebrow">
-            CHOOSE A METHOD
-          </p>
+  <h1>Donation Packs</h1>
 
-          <h2>
-            Make a donation
-          </h2>
-        </div>
+  <p>
+    Support the project and unlock exclusive cosmetics.
+    Every donation helps us keep the servers running
+    and deliver new content.
+  </p>
 
-        <span class="secure">
-          🔒 Secure checkout
-        </span>
-
-      </div>
+</section>
 
 
-      <div class="cards">
+<section class="packs" id="packs">
 
-        <!-- PAYPAL -->
-        <article class="card featured">
+  <div class="pack-grid" id="packGrid"></div>
 
-          <div class="card-icon paypal">
-            P
-          </div>
-
-          <div>
-            <h3>
-              PayPal
-            </h3>
-
-            <p>
-              Donate securely using PayPal.
-            </p>
-          </div>
-
-          <button
-            class="primary-btn full"
-            id="paypalBtn"
-          >
-            Donate with PayPal
-            <span>→</span>
-          </button>
-
-        </article>
+</section>
 
 
-        <!-- MANUAL -->
-        <article class="card">
+<section class="info-section">
 
-          <div class="card-icon gift">
-            ★
-          </div>
+  <div class="info-card">
+    <h3>◆ Secure Payments</h3>
+    <p>
+      Payments are handled through the configured payment
+      provider. We never ask for your payment password.
+    </p>
+  </div>
 
-          <div>
-            <h3>
-              Manual support
-            </h3>
+  <div class="info-card">
+    <h3>◈ Fast Delivery</h3>
+    <p>
+      Orders are sent to the project team for verification
+      and processing.
+    </p>
+  </div>
 
-            <p>
-              Already donated another way?
-              Submit your payment reference so
-              the team can verify it.
-            </p>
-          </div>
+  <div class="info-card">
+    <h3>★ Support The Project</h3>
+    <p>
+      Donations help cover hosting, development,
+      infrastructure and future updates.
+    </p>
+  </div>
 
-          <button
-            class="secondary-btn full"
-            id="manualBtn"
-          >
-            Submit reference
-          </button>
-
-        </article>
-
-      </div>
-
-    </section>
+</section>
 
 
-    <!-- STEPS -->
-    <section class="info-grid">
+<section class="hero" id="faq">
 
-      <div class="info">
+  <h1 style="font-size:34px;">
+    FAQ
+  </h1>
 
-        <span>
-          01
-        </span>
+  <p>
+    <strong style="color:white;">
+      What happens after I donate?
+    </strong>
 
-        <h3>
-          Donate
-        </h3>
+    <br>
 
-        <p>
-          Choose your preferred supported
-          payment method.
-        </p>
+    Your order is recorded and sent to the project
+    team for verification and processing.
+  </p>
 
-      </div>
+  <p style="margin-top:20px;">
 
+    <strong style="color:white;">
+      Do I need Discord?
+    </strong>
 
-      <div class="info">
+    <br>
 
-        <span>
-          02
-        </span>
+    Yes. Your Discord username and ID identify your order.
 
-        <h3>
-          Verification
-        </h3>
+  </p>
 
-        <p>
-          Your payment/reference can be
-          checked by the project team.
-        </p>
+  <p style="margin-top:20px;">
 
-      </div>
+    <strong style="color:white;">
+      Can I use a discount code?
+    </strong>
 
+    <br>
 
-      <div class="info">
+    Yes. Enter a valid code during checkout.
 
-        <span>
-          03
-        </span>
+  </p>
 
-        <h3>
-          Support
-        </h3>
+</section>
 
-        <p>
-          Funds help with servers,
-          development and project costs.
-        </p>
-
-      </div>
-
-    </section>
+</main>
 
 
-    <!-- SAFETY NOTICE -->
-    <section class="notice">
+<footer>
 
-      <strong>
-        Important
-      </strong>
+  <div class="footer-inner">
 
-      <p>
-        Never send passwords, account cookies,
-        authentication codes or private account
-        credentials through this website.
-        OGFN does not need those details to process
-        a donation.
-      </p>
+    <div>
+      © 2026 Gilded. All rights reserved.
+    </div>
 
-    </section>
+    <div>
+      Donation services are subject to the Terms of Service.
+    </div>
 
-  </main>
+  </div>
+
+</footer>
 
 
-  <!-- FOOTER -->
-  <footer>
+<!-- MODAL -->
 
-    <span>
-      © <span id="year"></span> OGFN.
-      Not affiliated with Epic Games.
-    </span>
+<div
+  class="modal-overlay"
+  id="purchaseModal"
+>
 
-    <span>
-      Project support portal
-    </span>
+  <div class="modal">
 
-  </footer>
+    <button
+      class="close-modal"
+      onclick="closePurchase()"
+    >
+      ×
+    </button>
 
 
-  <!-- REFERENCE MODAL -->
-  <div
-    class="modal hidden"
-    id="modal"
-  >
+    <div class="steps">
 
-    <div class="modal-box">
+      <span class="step-dot active"></span>
+      <span class="step-dot"></span>
+      <span class="step-dot"></span>
+      <span class="step-dot"></span>
 
-      <button
-        class="close"
-        id="closeModal"
-        type="button"
-      >
-        ×
-      </button>
+    </div>
 
-      <p class="eyebrow">
-        DONATION REFERENCE
-      </p>
 
-      <h2>
-        Submit your reference
+    <!-- STEP 1 -->
+
+    <div id="step1">
+
+      <h2 id="modalTitle">
+        Purchase
       </h2>
 
-      <p class="modal-copy">
-        Use this only after making a legitimate donation.
-        Do not enter gift-card codes, passwords or
-        other sensitive credentials.
+      <p class="modal-subtitle">
+        Enter your Discord details to continue.
+      </p>
+
+      <div
+        class="error"
+        id="formError"
+      ></div>
+
+
+      <div class="field">
+
+        <label>
+          Discord Username
+        </label>
+
+        <input
+          id="discordUsername"
+          maxlength="100"
+          placeholder="player123"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Discord ID
+        </label>
+
+        <input
+          id="discordId"
+          maxlength="20"
+          inputmode="numeric"
+          placeholder="123456789012345678"
+        >
+
+        <div class="helper">
+          Discord → Settings → Advanced → Developer Mode →
+          right-click your profile → Copy User ID.
+        </div>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Discount Code
+        </label>
+
+        <div class="discount-row">
+
+          <input
+            id="discountCode"
+            placeholder="Enter discount code"
+            autocomplete="off"
+          >
+
+          <button onclick="applyDiscount()">
+            Apply
+          </button>
+
+        </div>
+
+        <div
+          id="discountStatus"
+          class="discount-status"
+        ></div>
+
+      </div>
+
+
+      <div class="terms">
+
+        <input
+          type="checkbox"
+          id="terms"
+        >
+
+        <label for="terms">
+
+          I agree to the Terms of Service and understand
+          that incorrect account information may prevent
+          delivery.
+
+        </label>
+
+      </div>
+
+
+      <button
+        class="continue-button"
+        onclick="continueToPayment()"
+      >
+        Continue
+      </button>
+
+    </div>
+
+
+    <!-- STEP 2 -->
+
+    <div id="step2" style="display:none;">
+
+      <h2>
+        Confirm Order
+      </h2>
+
+      <p class="modal-subtitle">
+        Check your order before payment.
       </p>
 
 
-      <form id="referenceForm">
+      <div class="payment-summary">
 
-        <label>
-          Discord username (optional)
+        <div class="summary-row">
+          <span>Package</span>
+          <span id="summaryPack"></span>
+        </div>
 
-          <input
-            name="discord"
-            maxlength="100"
-            placeholder="example"
-          >
-        </label>
+        <div class="summary-row">
+          <span>Discord</span>
+          <span id="summaryDiscord"></span>
+        </div>
+
+        <div class="summary-row">
+          <span>Discord ID</span>
+          <span id="summaryId"></span>
+        </div>
+
+        <div class="summary-row">
+          <span>Original Price</span>
+          <span id="summaryOriginal"></span>
+        </div>
+
+        <div
+          class="summary-row"
+          id="summaryDiscountRow"
+          style="display:none;"
+        >
+          <span>Discount</span>
+          <span
+            class="discount-text"
+            id="summaryDiscount"
+          ></span>
+        </div>
+
+        <div class="summary-row summary-total">
+          <span>Total</span>
+          <span id="summaryPrice"></span>
+        </div>
+
+      </div>
 
 
-        <label>
-          Donation/reference ID
-
-          <input
-            name="reference"
-            maxlength="120"
-            required
-            placeholder="e.g. transaction ID"
-          >
-        </label>
+      <button
+        class="continue-button"
+        onclick="createOrder()"
+      >
+        Continue to Payment
+      </button>
 
 
-        <label>
-          Amount
+      <button
+        class="back-button"
+        onclick="showStep(1)"
+      >
+        Back
+      </button>
 
-          <input
-            name="amount"
-            maxlength="30"
-            placeholder="e.g. £10"
-          >
-        </label>
+    </div>
 
+
+    <!-- STEP 3 -->
+
+    <div id="step3" style="display:none;">
+
+      <h2>
+        Choose Payment
+      </h2>
+
+      <p class="modal-subtitle">
+        Select your payment method.
+      </p>
+
+
+      <div class="payment-summary">
+
+        <div class="summary-row">
+          <span>Order</span>
+          <span id="paymentOrder"></span>
+        </div>
+
+        <div class="summary-row">
+          <span>Package</span>
+          <span id="paymentPack"></span>
+        </div>
+
+        <div class="summary-row summary-total">
+          <span>Total</span>
+          <span id="paymentPrice"></span>
+        </div>
+
+      </div>
+
+
+      <div class="payment-choice">
 
         <button
-          class="primary-btn full"
-          type="submit"
+          class="paypal"
+          onclick="startPayment('paypal')"
         >
-          Send for verification
-          <span>→</span>
+          Pay with PayPal
         </button>
 
+        <button
+          class="card"
+          onclick="startPayment('card')"
+        >
+          Pay with Card
+        </button>
 
-        <p
-          id="formStatus"
-          class="status"
-        ></p>
+      </div>
 
-      </form>
+
+      <button
+        class="back-button"
+        onclick="showStep(2)"
+      >
+        Back
+      </button>
+
+    </div>
+
+
+    <!-- STEP 4 -->
+
+    <div id="step4" style="display:none;">
+
+      <div class="success">
+
+        <div class="success-icon">
+          ✓
+        </div>
+
+        <h2>
+          Order Complete
+        </h2>
+
+        <p id="successMessage">
+          Your order has been created.
+        </p>
+
+        <button
+          class="continue-button"
+          onclick="closePurchase()"
+        >
+          Close
+        </button>
+
+      </div>
 
     </div>
 
   </div>
 
+</div>
 
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+
+<script>
+
+/*
+==========================================================
+CONFIGURATION
+==========================================================
+*/
+
+const API_URL =
+  "https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev";
+
+
+/*
+==========================================================
+EASY PACK CONFIGURATION
+==========================================================
+
+Add new packs here.
+
+You do NOT need to edit the HTML.
+
+Example:
+
+{
+  id: "rare-pack",
+  name: "Rare Pack",
+  price: 5.99,
+  icon: "◆",
+  description: "Rare cosmetic collection.",
+  features: [
+    "Rare Skins",
+    "Rare Pickaxes",
+    "Rare Emotes"
+  ],
+  bestValue: false
+}
+
+*/
+
+const PACKS = [
+
+  {
+    id: "dev-locker",
+    name: "Dev Locker",
+    price: 14.99,
+    icon: "💎",
+    description:
+      "All Skins, Pickaxes, Emotes, Gliders & Backblings including custom cosmetics.",
+    features: [
+      "All Skins",
+      "All Pickaxes",
+      "All Emotes",
+      "All Gliders",
+      "All Backblings",
+      "Custom Cosmetics Included"
+    ],
+    bestValue: true
+  },
+
+  {
+    id: "full-locker",
+    name: "Full Locker",
+    price: 10.99,
+    icon: "👑",
+    description:
+      "All Skins, Pickaxes, Emotes, Gliders & Backblings excluding custom cosmetics.",
+    features: [
+      "All Skins",
+      "All Pickaxes",
+      "All Emotes",
+      "All Gliders",
+      "All Backblings"
+    ],
+    bestValue: false
+  }
+
+];
+
+
+/*
+==========================================================
+STATE
+==========================================================
+*/
+
+let currentOrder = {
+  packId: "",
+  pack: "",
+  originalPrice: 0,
+  finalPrice: 0,
+  discountCode: "",
+  discountAmount: 0,
+  discountPercent: 0,
+  discordUsername: "",
+  discordId: "",
+  orderId: ""
+};
+
+
+/*
+==========================================================
+RENDER PACKS
+==========================================================
+*/
+
+function renderPacks() {
+
+  const grid =
+    document.getElementById("packGrid");
+
+  grid.innerHTML = "";
+
+  PACKS.forEach(pack => {
+
+    const card =
+      document.createElement("article");
+
+    card.className = "pack-card";
+
+    card.innerHTML = `
+
+      <div class="pack-image">
+
+        ${
+          pack.bestValue
+          ? `<div class="best-value">☆ BEST VALUE</div>`
+          : ""
+        }
+
+        <div class="pack-icon">
+          ${pack.icon}
+        </div>
+
+      </div>
+
+      <div class="pack-content">
+
+        <div class="pack-name">
+          ${escapeHtml(pack.name)}
+        </div>
+
+        <div class="price">
+
+          <strong>
+            $${pack.price.toFixed(2)}
+          </strong>
+
+          <span>
+            USD
+          </span>
+
+        </div>
+
+        <p class="description">
+          ${escapeHtml(pack.description)}
+        </p>
+
+        <ul class="features">
+
+          ${pack.features.map(feature => `
+            <li>${escapeHtml(feature)}</li>
+          `).join("")}
+
+        </ul>
+
+        <button
+          class="buy-button"
+          onclick="openPurchase('${pack.id}')"
+        >
+          ▣ &nbsp; Buy Now
+        </button>
+
+      </div>
+
+    `;
+
+    grid.appendChild(card);
+
+  });
+
+}
+
+
+function escapeHtml(value) {
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+}
+
+
+/*
+==========================================================
+OPEN PURCHASE
+==========================================================
+*/
+
+function openPurchase(packId) {
+
+  const pack =
+    PACKS.find(p => p.id === packId);
+
+  if (!pack) return;
+
+  currentOrder = {
+    packId: pack.id,
+    pack: pack.name,
+    originalPrice: pack.price,
+    finalPrice: pack.price,
+    discountCode: "",
+    discountAmount: 0,
+    discountPercent: 0,
+    discordUsername: "",
+    discordId: "",
+    orderId: ""
+  };
+
+  document.getElementById("modalTitle")
+    .textContent =
+      `Purchase ${pack.name}`;
+
+  document.getElementById("discordUsername")
+    .value = "";
+
+  document.getElementById("discordId")
+    .value = "";
+
+  document.getElementById("discountCode")
+    .value = "";
+
+  document.getElementById("discountStatus")
+    .textContent = "";
+
+  document.getElementById("discountStatus")
+    .className = "discount-status";
+
+  document.getElementById("terms")
+    .checked = false;
+
+  document.getElementById("purchaseModal")
+    .classList.add("active");
+
+  document.body.classList.add("modal-open");
+
+  showStep(1);
+
+}
+
+
+/*
+==========================================================
+CLOSE
+==========================================================
+*/
+
+function closePurchase() {
+
+  document.getElementById("purchaseModal")
+    .classList.remove("active");
+
+  document.body.classList.remove("modal-open");
+
+  showStep(1);
+
+}
+
+
+/*
+==========================================================
+STEPS
+==========================================================
+*/
+
+function showStep(step) {
+
+  for (let i = 1; i <= 4; i++) {
+
+    const element =
+      document.getElementById(`step${i}`);
+
+    element.style.display =
+      i === step ? "block" : "none";
+
+  }
+
+  document.querySelectorAll(".step-dot")
+    .forEach((dot,index) => {
+
+      dot.classList.toggle(
+        "active",
+        index === step - 1
+      );
+
+    });
+
+}
+
+
+/*
+==========================================================
+ERROR
+==========================================================
+*/
+
+function showError(message) {
+
+  const error =
+    document.getElementById("formError");
+
+  error.textContent = message;
+  error.classList.add("show");
+
+}
+
+
+function clearError() {
+
+  const error =
+    document.getElementById("formError");
+
+  error.textContent = "";
+  error.classList.remove("show");
+
+}
+
+
+/*
+==========================================================
+DISCOUNT VALIDATION
+==========================================================
+*/
+
+async function applyDiscount() {
+
+  clearError();
+
+  const code =
+    document.getElementById("discountCode")
+      .value
+      .trim();
+
+  if (!code) {
+
+    setDiscountStatus(
+      "Enter a discount code.",
+      false
+    );
+
+    return;
+
+  }
+
+  const status =
+    document.getElementById("discountStatus");
+
+  status.textContent =
+    "Checking code...";
+
+  status.className =
+    "discount-status";
+
+
+  try {
+
+    const response =
+      await fetch(
+        `${API_URL}/api/discount/validate`,
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":"application/json"
+          },
+
+          body:JSON.stringify({
+            code,
+            packId:currentOrder.packId
+          })
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok || !data.valid) {
+
+      currentOrder.discountCode = "";
+      currentOrder.discountAmount = 0;
+      currentOrder.discountPercent = 0;
+      currentOrder.finalPrice =
+        currentOrder.originalPrice;
+
+      setDiscountStatus(
+        data.error || "Invalid discount code.",
+        false
+      );
+
+      return;
+
+    }
+
+
+    currentOrder.discountCode =
+      code.toUpperCase();
+
+    currentOrder.discountPercent =
+      data.percent;
+
+    currentOrder.discountAmount =
+      data.discountAmount;
+
+    currentOrder.finalPrice =
+      data.finalPrice;
+
+
+    setDiscountStatus(
+      `${data.percent}% discount applied!`,
+      true
+    );
+
+  }
+
+  catch(error) {
+
+    console.error(error);
+
+    setDiscountStatus(
+      "Unable to check discount code.",
+      false
+    );
+
+  }
+
+}
+
+
+function setDiscountStatus(message,success) {
+
+  const element =
+    document.getElementById("discountStatus");
+
+  element.textContent = message;
+
+  element.className =
+    success
+    ? "discount-status success"
+    : "discount-status error";
+
+}
+
+
+/*
+==========================================================
+CONTINUE
+==========================================================
+*/
+
+async function continueToPayment() {
+
+  clearError();
+
+  const username =
+    document.getElementById("discordUsername")
+      .value
+      .trim();
+
+  const discordId =
+    document.getElementById("discordId")
+      .value
+      .trim();
+
+  const terms =
+    document.getElementById("terms")
+      .checked;
+
+
+  if (!username) {
+
+    showError(
+      "Please enter your Discord username."
+    );
+
+    return;
+
+  }
+
+
+  if (!/^[0-9]{17,20}$/.test(discordId)) {
+
+    showError(
+      "Please enter a valid Discord ID."
+    );
+
+    return;
+
+  }
+
+
+  if (!terms) {
+
+    showError(
+      "You must agree to the Terms of Service."
+    );
+
+    return;
+
+  }
+
+
+  currentOrder.discordUsername =
+    username;
+
+  currentOrder.discordId =
+    discordId;
+
+
+  /*
+    If a discount was entered, validate it
+    again server-side before showing the
+    final price.
+  */
+
+  if (currentOrder.discountCode) {
+
+    try {
+
+      const response =
+        await fetch(
+          `${API_URL}/api/discount/validate`,
+          {
+            method:"POST",
+
+            headers:{
+              "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+              code:currentOrder.discountCode,
+              packId:currentOrder.packId
+            })
+          }
+        );
+
+
+      const data =
+        await response.json();
+
+
+      if (!response.ok || !data.valid) {
+
+        showError(
+          "This discount code is no longer available."
+        );
+
+        return;
+
+      }
+
+
+      currentOrder.finalPrice =
+        data.finalPrice;
+
+      currentOrder.discountAmount =
+        data.discountAmount;
+
+      currentOrder.discountPercent =
+        data.percent;
+
+    }
+
+    catch {
+
+      showError(
+        "Could not verify the discount code."
+      );
+
+      return;
+
+    }
+
+  }
+
+
+  document.getElementById("summaryPack")
+    .textContent =
+      currentOrder.pack;
+
+  document.getElementById("summaryDiscord")
+    .textContent =
+      currentOrder.discordUsername;
+
+  document.getElementById("summaryId")
+    .textContent =
+      currentOrder.discordId;
+
+  document.getElementById("summaryOriginal")
+    .textContent =
+      `$${currentOrder.originalPrice.toFixed(2)}`;
+
+
+  if (currentOrder.discountCode) {
+
+    document.getElementById(
+      "summaryDiscountRow"
+    ).style.display = "flex";
+
+    document.getElementById(
+      "summaryDiscount"
+    ).textContent =
+      `-${currentOrder.discountPercent}%`;
+
+  }
+
+  else {
+
+    document.getElementById(
+      "summaryDiscountRow"
+    ).style.display = "none";
+
+  }
+
+
+  document.getElementById("summaryPrice")
+    .textContent =
+      `$${currentOrder.finalPrice.toFixed(2)}`;
+
+
+  showStep(2);
+
+}
+
+
+/*
+==========================================================
+CREATE ORDER
+==========================================================
+*/
+
+async function createOrder() {
+
+  clearError();
+
+  const button =
+    document.querySelector(
+      "#step2 .continue-button"
+    );
+
+  button.disabled = true;
+  button.textContent = "Creating order...";
+
+
+  try {
+
+    const response =
+      await fetch(
+        `${API_URL}/api/order/create`,
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":"application/json"
+          },
+
+          body:JSON.stringify({
+
+            packId:
+              currentOrder.packId,
+
+            discordUsername:
+              currentOrder.discordUsername,
+
+            discordId:
+              currentOrder.discordId,
+
+            discountCode:
+              currentOrder.discountCode
+
+          })
+
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      showError(
+        data.error ||
+        "Unable to create order."
+      );
+
+      button.disabled = false;
+      button.textContent =
+        "Continue to Payment";
+
+      return;
+
+    }
+
+
+    currentOrder.orderId =
+      data.orderId;
+
+    currentOrder.finalPrice =
+      data.finalPrice;
+
+
+    /*
+      100% discount.
+
+      No payment provider is opened.
+    */
+
+    if (data.free === true) {
+
+      document.getElementById(
+        "successMessage"
+      ).textContent =
+        `Order ${data.orderId} has been created successfully. Your 100% discount was accepted and the order has been sent to the project team.`;
+
+      showStep(4);
+
+      button.disabled = false;
+      button.textContent =
+        "Continue to Payment";
+
+      return;
+
+    }
+
+
+    document.getElementById(
+      "paymentOrder"
+    ).textContent =
+      data.orderId;
+
+    document.getElementById(
+      "paymentPack"
+    ).textContent =
+      currentOrder.pack;
+
+    document.getElementById(
+      "paymentPrice"
+    ).textContent =
+      `$${data.finalPrice.toFixed(2)}`;
+
+
+    currentOrder.paymentUrl =
+      data.paymentUrl;
+
+
+    showStep(3);
+
+
+  }
+
+  catch(error) {
+
+    console.error(error);
+
+    showError(
+      "Unable to connect to the payment server."
+    );
+
+  }
+
+
+  button.disabled = false;
+  button.textContent =
+    "Continue to Payment";
+
+}
+
+
+/*
+==========================================================
+PAYMENT
+==========================================================
+*/
+
+async function startPayment(method) {
+
+  if (!currentOrder.orderId) {
+
+    alert("Invalid order.");
+
+    return;
+
+  }
+
+
+  try {
+
+    const response =
+      await fetch(
+        `${API_URL}/api/order/payment`,
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":"application/json"
+          },
+
+          body:JSON.stringify({
+
+            orderId:
+              currentOrder.orderId,
+
+            method
+
+          })
+
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      alert(
+        data.error ||
+        "Unable to start payment."
+      );
+
+      return;
+
+    }
+
+
+    if (data.url) {
+
+      window.location.href =
+        data.url;
+
+    }
+
+  }
+
+  catch(error) {
+
+    console.error(error);
+
+    alert(
+      "Unable to connect to the payment server."
+    );
+
+  }
+
+}
+
+
+/*
+==========================================================
+MOBILE MENU
+==========================================================
+*/
+
+document
+  .getElementById("mobileMenu")
+  .addEventListener("click",() => {
+
+    document
+      .getElementById("navLinks")
+      .classList
+      .toggle("open");
+
+  });
+
+
+/*
+==========================================================
+START
+==========================================================
+*/
+
+renderPacks();
+
+</script>
 
 </body>
 </html>
